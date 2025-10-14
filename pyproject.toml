@@ -1,0 +1,99 @@
+# ==== BUILD SYSTEM ====
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# ==== PROJECT METADATA ====
+
+[project]
+name = "ez_ados"
+description = "A simple Python interface to interact with Azure DevOps API"
+authors = [{ name = "Vincent BESANCON", email = "contact@stash.vinzworld.fr" }]
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.14"
+keywords = [""]
+urls = { Homepage = "https://github.com/bigbrozer/ez-azure-devops" }
+classifiers = [
+    # "Development Status :: 1 - Planning",
+    # "Development Status :: 2 - Pre-Alpha",
+    # "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
+    # "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Programming Language :: Python :: 3",
+]
+dynamic = ["version"]
+dependencies = ["click >=8.0.3", "rich >=11.0.0"]
+optional-dependencies = {}
+
+[project.scripts]
+ez_ados = "ez_ados.cli:entrypoint"
+
+[dependency-groups]
+dev = [
+    "mypy >=0.931",
+    "mypy-extensions >=1.0.0",
+    "pyroma >=2.6",
+    "pytest >=7.1.2",
+    "pytest-cov >=3.0.0",
+    "ruff >=0.9.1",
+    "vulture >=1.6",
+]
+
+# ==== BUILD TOOLS CONFIG ====
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ez_ados"]
+
+[tool.hatch.version]
+path = "src/ez_ados/version.py"
+
+# ==== TOOLS CONFIG ====
+
+# Pytest
+# https://docs.pytest.org/en/
+# https://pytest-cov.readthedocs.io/en/latest/
+[tool.pytest.ini_options]
+addopts = "-rA --cov ez_ados --cov-branch --cov-report term --cov-report xml --cov-report html --junit-xml=junit.ez_ados.xml"
+testpaths = ["tests"]
+junit_family = "xunit2"
+filterwarnings = ["once::Warning", "ignore::DeprecationWarning"]
+
+# Mypy
+# https://mypy.readthedocs.io/en/stable/config_file.html
+[tool.mypy]
+# Ignore some import for missing stub for a library.
+#[[tool.mypy.overrides]]
+#module = ["<mylib>"]
+#ignore_missing_imports = true
+
+# Ruff
+# https://docs.astral.sh/ruff/
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["I", "UP", "FIX", "PL", "G", "D", "E", "F", "C90", "S"]
+ignore = ["D203", "D212"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ["S101"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 20
+
+[tool.ruff.lint.isort]
+lines-between-types = 1
+
+[tool.ruff.format]
+docstring-code-format = true
+
+# Vulture
+# https://github.com/jendrikseipp/vulture#configuration
+[tool.vulture]
+min_confidence = 100

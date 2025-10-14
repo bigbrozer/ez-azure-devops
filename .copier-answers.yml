@@ -1,0 +1,14 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: v8.1.1
+_src_path: .
+author: Vincent BESANCON
+author_email: contact@stash.vinzworld.fr
+cli_name: ez_ados
+description: A simple Python interface to interact with Azure DevOps API
+feat_use_rich_click: false
+git_default_branch: main
+name: ez-azure-devops
+package_name: ez_ados
+project_url: https://github.com/bigbrozer/ez-azure-devops
+publish_to_blob_storage: false
+python_version: '3.14'
