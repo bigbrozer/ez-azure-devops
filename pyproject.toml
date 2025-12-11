@@ -12,7 +12,7 @@ description = "A simple Python interface to interact with Azure DevOps API"
 authors = [{ name = "Vincent BESANCON", email = "contact@stash.vinzworld.fr" }]
 readme = "README.md"
 license = { file = "LICENSE" }
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 keywords = [""]
 urls = { Homepage = "https://github.com/bigbrozer/ez-azure-devops" }
 classifiers = [
