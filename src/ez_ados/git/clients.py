@@ -6,7 +6,6 @@ from pathlib import PurePosixPath
 from typing import Any
 
 from ..base.clients import Client
-from ..base.error_handlers import retry_on_http_error
 from ..policy.configurations.models import PolicyConfigurationCollection
 from .models import GitItem, GitItemCollection, GitItemDescriptor, GitItemsBatch, GitRefCollection, GitRepository
 
@@ -17,13 +16,11 @@ logger = logging.getLogger(__name__)
 class GitRepositoryClient(Client):
     """Represent a client to Git repository API in Azure DevOps."""
 
-    @retry_on_http_error
     def get(self, repository: str) -> GitRepository:
         """Fetch a single Git repository."""
         logger.info("Fetching details for repository '%s'...", repository)
         return GitRepository.model_validate(self._client.get(repository).raise_for_status().json())
 
-    @retry_on_http_error
     def get_refs(self, repository: str, branch_startswith: str | None = None) -> GitRefCollection:
         """Fetch all refs for a single Git repository."""
         req_params = {}
@@ -33,7 +30,6 @@ class GitRepositoryClient(Client):
             self._client.get(f"/{repository}/refs", params=req_params).raise_for_status().json()
         )
 
-    @retry_on_http_error
     def get_items_batch(self, repository: str, item_descriptors: GitItemsBatch) -> GitItemCollection:
         """Git a batch of items (files and folders) from a repository."""
         request_body = item_descriptors.model_dump(mode="json")
@@ -46,7 +42,6 @@ class GitRepositoryClient(Client):
         logger.debug("Items batch response: %s", serialized_response)
         return serialized_response
 
-    @retry_on_http_error
     def get_item(self, repository: str, path: str | PurePosixPath, branch: str | None = None) -> GitItem:
         """Get an item (files, folders and symlinks) from a git repository."""
         if isinstance(path, str):
@@ -82,14 +77,12 @@ class GitRepositoryClient(Client):
             item_descriptors=GitItemsBatch(item_descriptors=[GitItemDescriptor(path=_path, version=branch)]),
         )
 
-    @retry_on_http_error
     def is_branch_locked(self, repository: str, branch: str) -> bool:
         """Check for branch lock status."""
         ref_info = self.get_refs(repository=repository, branch_startswith=branch)[0]
         logger.debug("Checking branch lock status for '%s@%s': %s", repository, branch, ref_info)
         return ref_info.locked if ref_info.locked else False
 
-    @retry_on_http_error
     def lock_branch_toggle(self, repository: str, branch: str, locked: bool) -> dict[str, Any]:
         """Lock / Unlock a branch on a single Git repository."""
         req_params = {}
@@ -106,7 +99,6 @@ class GitRepositoryClient(Client):
 class GitPolicyConfigurationClient(Client):
     """Represent a client to Git Repository Policy Configuration API in Azure DevOps."""
 
-    @retry_on_http_error
     def get_policies_for_ref(
         self, repository_id: str, ref_name: str, policy_type: str
     ) -> PolicyConfigurationCollection:
@@ -117,7 +109,6 @@ class GitPolicyConfigurationClient(Client):
         logger.debug("Request URL: %s\nResponse: %s", response.url, response.content)
         return PolicyConfigurationCollection.model_validate(response.json())
 
-    @retry_on_http_error
     def get_build_policies_for_ref(self, repository_id: str, ref_name: str) -> PolicyConfigurationCollection:
         """Get all build policies for a branch of a repository."""
         policies = self.get_policies_for_ref(

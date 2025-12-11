@@ -3,7 +3,6 @@
 import logging
 
 from ..base.clients import Client
-from ..base.error_handlers import retry_on_http_error
 from ..git.models import GitRepository
 from .models import (
     BuildDefinition,
@@ -18,7 +17,6 @@ logger = logging.getLogger(__name__)
 class BuildClient(Client):
     """Represent a client to Builds API in Azure DevOps."""
 
-    @retry_on_http_error
     def get_build_definition(self, id: str) -> BuildDefinition:
         """Get a build definition by ID."""
         logger.debug("Getting build definition id=%d", id)
@@ -26,7 +24,6 @@ class BuildClient(Client):
         logger.debug("Build definition id=%s specs: %s", id, response)
         return response
 
-    @retry_on_http_error
     def list_build_definitions(self, repository: GitRepository | None = None) -> BuildDefinitionCollection:
         """List all build definitions available in a project."""
         _query_params: dict[str, str] = {}
@@ -40,7 +37,6 @@ class BuildClient(Client):
             self._client.get("/definitions", params=_query_params).raise_for_status().json()
         )
 
-    @retry_on_http_error
     def create_build_definition(self, definition: BuildDefinitionCreate) -> BuildDefinition:
         """Create a new build definition in a project."""
         logger.debug(
@@ -58,7 +54,6 @@ class BuildClient(Client):
         logger.debug("Build definition resource created: %s", serialized_response)
         return serialized_response
 
-    @retry_on_http_error
     def delete_build_definition(self, id: int) -> int:
         """Delete a build definition resource."""
         response = self._client.delete(f"/definitions/{id}").raise_for_status()

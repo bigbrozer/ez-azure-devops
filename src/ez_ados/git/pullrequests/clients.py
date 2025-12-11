@@ -3,7 +3,6 @@
 import logging
 
 from ...base.clients import Client
-from ...base.error_handlers import retry_on_http_error
 from .models import PullRequestThread, PullRequestThreadCollection, PullRequestThreadCreate
 
 # Get a logger for this module
@@ -13,7 +12,6 @@ logger = logging.getLogger(__name__)
 class PullRequestClient(Client):
     """Represent a client to Pull Request API in Azure DevOps."""
 
-    @retry_on_http_error
     def find_existing_thread(self, pr_id: int, plan: str) -> PullRequestThread | None:
         """Return the existing thread ID and associated comment IDs for a project."""
         response = self._client.get(f"/{pr_id}/threads").raise_for_status()
@@ -36,7 +34,6 @@ class PullRequestClient(Client):
 
         return existing_thread
 
-    @retry_on_http_error
     def delete_thread_comments(self, pr_id: int, thread: PullRequestThread):
         """Delete all comments for a given thread on a Pull Request."""
         logger.info("Deleting %d comments for thread with id=%s", len(thread.comments), thread.id)
@@ -44,7 +41,6 @@ class PullRequestClient(Client):
             delete_request = self._client.delete(f"/{pr_id}/threads/{thread.id}/comments/{comment.id}")
             delete_request.raise_for_status()
 
-    @retry_on_http_error
     def new_thread(self, pr_id: int, thread: PullRequestThreadCreate):
         """Post a new thread on a pull request."""
         logger.info("Posting a thread to: %s%d", self.base_url, pr_id)
