@@ -25,11 +25,12 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 dynamic = ["version"]
-dependencies = ["click >=8.0.3", "rich >=11.0.0"]
+dependencies = [
+    "azure-identity>=1.25.0,<2.0.0",
+    "httpx>=0.28.1",
+    "pydantic>=2.11.10,<3.0.0",
+]
 optional-dependencies = {}
-
-[project.scripts]
-ez_ados = "ez_ados.cli:entrypoint"
 
 [dependency-groups]
 dev = [
