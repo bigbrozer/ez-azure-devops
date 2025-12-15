@@ -13,6 +13,7 @@ from .git.pullrequests.clients import PullRequestClient
 from .pipelines.clients import PipelineClient
 from .policy.configurations.clients import PolicyConfigurationClient
 from .policy.types.clients import PolicyTypeClient
+from .servicehooks.subscriptions.clients import HookSubscriptionClient
 
 # Get a logger for this module
 logger = logging.getLogger(__name__)
@@ -114,3 +115,8 @@ class AzureDevOps:
         """Return an HTTP client for interacting with Builds endpoint."""
         _endpoint = [self.org_url, project, "_apis", "build"]
         return BuildClient(self._build_client(endpoint="/".join(_endpoint)))
+
+    def hook_subscriptions_client(self) -> HookSubscriptionClient:
+        """Return an HTTP client for interacting with Service Hooks' subscriptions endpoint."""
+        _endpoint = [self.org_url, "_apis", "hooks", "subscriptions"]
+        return HookSubscriptionClient(self._build_client(endpoint="/".join(_endpoint)))
