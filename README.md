@@ -5,6 +5,7 @@ A simple Python interface to interact with Azure DevOps API.
 Contents:
 
 * [Installation](#installation)
+* [Quick start](#quick-start)
 * [Development](#development)
   * [Requirements](#requirements)
   * [Install tools](#install-tools)
@@ -17,6 +18,23 @@ With [uv](https://docs.astral.sh/uv/):
 
 ```sh
 uv add git+https://github.com/bigbrozer/ez-azure-devops.git
+```
+
+## Quick start
+
+```python
+from ez_ados import AzureDevOps
+
+# Init a client for an organization
+my_org = AzureDevOps("https://dev.azure.com/myorg")
+
+# Authenticate using EntraID
+# See https://learn.microsoft.com/en-us/dotnet/azure/sdk/authentication/credential-chains?tabs=dac#defaultazurecredential-overview
+my_org.authenticate()
+
+# Get a project
+projects = my_org.projects_client()
+print(projects.get(name="my_project"))
 ```
 
 ## Development
