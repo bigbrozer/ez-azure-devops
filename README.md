@@ -17,7 +17,13 @@ Contents:
 With [uv](https://docs.astral.sh/uv/):
 
 ```sh
-uv add git+https://github.com/bigbrozer/ez-azure-devops.git
+uv add ez_ados
+```
+
+With [pip](https://pip.pypa.io/en/stable/):
+
+```sh
+pip install ez_ados
 ```
 
 ## Quick start
