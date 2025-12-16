@@ -4,6 +4,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.3.1 - 2025-12-16
+
+### <!-- 1 -->🐛 Bug Fixes
+
+* **docs**: Propose to install for uv or pip
+
 ## 0.3.0 - 2025-12-16
 
 ### <!-- 0 -->🚀 Features
