@@ -52,10 +52,11 @@ def test_git_item():
         GitItem(objectId="9809798755", gitObjectType="commit", path="tests/folder"),
     ]
     assert resources[0].git_object_type.value == 3  # noqa: PLR2004
-    assert resources[1].git_object_type.value == 1  # noqa: PLR2004
+    assert resources[1].git_object_type.value == 1
 
     try:
-        GitItemCollection.model_validate({"count": len(resources), "value": resources})
+        collection = GitItemCollection.model_validate({"count": len(resources), "value": resources})
+        assert collection.count == 2  # noqa: PLR2004
     except pydantic.ValidationError as exc:
         pytest.fail(reason=str(exc))
 
@@ -91,7 +92,8 @@ def test_git_ref():
     assert resources[1].name == "refs/heads/develop"
 
     try:
-        GitRefCollection.model_validate({"count": len(resources), "value": resources})
+        collection = GitRefCollection.model_validate({"count": len(resources), "value": resources})
+        assert collection.count == 2  # noqa: PLR2004
     except pydantic.ValidationError as exc:
         pytest.fail(reason=str(exc))
 
@@ -145,6 +147,7 @@ def test_pipeline_collection():
             Pipeline(id=2, name="my-cd", folder="/cd", url="https://example.com", revision=1),
         ]
         collection = PipelineCollection.model_validate({"count": len(pipelines), "value": pipelines})
+        assert collection.count == 2  # noqa: PLR2004
     except pydantic.ValidationError as exc:
         pytest.fail(reason=str(exc))
 
@@ -174,7 +177,8 @@ def test_policy_configuration():
     assert resources[0].settings.display_name == "Build"
 
     try:
-        PolicyConfigurationCollection.model_validate({"count": len(resources), "value": resources})
+        collection = PolicyConfigurationCollection.model_validate({"count": len(resources), "value": resources})
+        assert collection.count == 2  # noqa: PLR2004
     except pydantic.ValidationError as exc:
         pytest.fail(reason=str(exc))
 
@@ -209,7 +213,8 @@ def test_git_pull_request_thread():
     assert resources[1].deleted
 
     try:
-        PullRequestThreadCollection.model_validate({"count": len(resources), "value": resources})
+        collection = PullRequestThreadCollection.model_validate({"count": len(resources), "value": resources})
+        assert collection.count == 2  # noqa: PLR2004
     except pydantic.ValidationError as exc:
         pytest.fail(reason=str(exc))
 

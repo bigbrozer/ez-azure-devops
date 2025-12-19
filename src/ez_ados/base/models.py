@@ -2,7 +2,7 @@
 
 from typing import Annotated, Self
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 
 class JSONModel(BaseModel):
@@ -18,14 +18,13 @@ class JSONModel(BaseModel):
 class BaseCollection[T](JSONModel):
     """Base class for a collection of resources in Azure DevOps."""
 
-    count: Annotated[int | None, Field(default=None)] = None
     value: Annotated[list[T], Field(default=[])] = []
 
-    @model_validator(mode="after")
-    def update_count(self) -> Self:
-        """Auto update count attribute."""
-        self.count = len(self.value)
-        return self
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def count(self) -> int:
+        """Return the number of items in this collection."""
+        return len(self.value)
 
     def append(self, element: T):
         """Append an element to the collection."""

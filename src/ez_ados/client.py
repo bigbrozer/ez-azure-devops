@@ -24,7 +24,7 @@ class AzureDevOps:
 
     API_VERSION = "7.1"
 
-    def __init__(self, org_url: str):
+    def __init__(self, org_url: str, timeout: int = 30):
         """Create a new Azure DevOps connection."""
         if not org_url.startswith("https://dev.azure.com/"):
             raise ValueError("You did not provide an URL to an Azure DevOps organization !")
@@ -34,6 +34,7 @@ class AzureDevOps:
         self.org_url = org_url
         self._token: str | None = None
         self._clients_cache: dict[int, httpx.Client] = {}
+        self._timeout = timeout
 
     def authenticate(self, credentials: TokenCredential | None = None):
         """
@@ -48,7 +49,7 @@ class AzureDevOps:
     def _build_client(self, endpoint: str) -> httpx.Client:
         """Return an HTTP client for interacting with an Azure DevOps API endpoint."""
         default_params = {"api-version": AzureDevOps.API_VERSION}
-        client = httpx.Client(base_url=endpoint, timeout=5.0, params=default_params)
+        client = httpx.Client(base_url=endpoint, timeout=self._timeout, params=default_params)
         if self._token:
             client.headers.update({"Authorization": f"Bearer {self._token}"})
         else:
