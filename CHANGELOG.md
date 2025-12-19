@@ -4,6 +4,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.4.0 - 2025-12-19
+
+### <!-- 0 -->🚀 Features
+
+* **client**: Allow to set a global timeout and increase its default value from 5 to 30 secs
+
+### <!-- 1 -->🐛 Bug Fixes
+
+* **base**: `BaseCollection.count` is now computed as an int
+
 ## 0.3.1 - 2025-12-16
 
 ### <!-- 1 -->🐛 Bug Fixes
