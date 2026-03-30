@@ -10,6 +10,7 @@ from .core.clients import ProjectClient
 from .credentials import AzureCredential, TokenCredential
 from .git.clients import GitPolicyConfigurationClient, GitRepositoryClient
 from .git.pullrequests.clients import PullRequestClient
+from .identities.clients import IdentityClient
 from .pipelines.clients import PipelineClient
 from .policy.configurations.clients import PolicyConfigurationClient
 from .policy.types.clients import PolicyTypeClient
@@ -46,9 +47,9 @@ class AzureDevOps:
             credentials = AzureCredential()
         self._token = credentials.get_token()
 
-    def _build_client(self, endpoint: str) -> httpx.Client:
+    def _build_client(self, endpoint: str, api_version: str | None = None) -> httpx.Client:
         """Return an HTTP client for interacting with an Azure DevOps API endpoint."""
-        default_params = {"api-version": AzureDevOps.API_VERSION}
+        default_params = {"api-version": api_version or AzureDevOps.API_VERSION}
         client = httpx.Client(base_url=endpoint, timeout=self._timeout, params=default_params)
         if self._token:
             client.headers.update({"Authorization": f"Bearer {self._token}"})
@@ -80,10 +81,19 @@ class AzureDevOps:
         _endpoint = [self.org_url, "_apis", "projects"]
         return ProjectClient(self._build_client(endpoint="/".join(_endpoint)))
 
+    def identity_client(self) -> IdentityClient:
+        """Return an HTTP client for interacting with the IMS Identities endpoint."""
+        vssps_url = self.org_url.replace("https://dev.azure.com/", "https://vssps.dev.azure.com/")
+        _endpoint = [vssps_url, "_apis", "identities"]
+        return IdentityClient(self._build_client(endpoint="/".join(_endpoint), api_version="7.2-preview.1"))
+
     def pull_request_client(self, project: str, repository: str) -> PullRequestClient:
         """Return an HTTP client for interacting with Pull Request endpoint."""
         _endpoint = [self.org_url, project, "_apis", "git", "repositories", repository, "pullrequests"]
-        return PullRequestClient(self._build_client(endpoint="/".join(_endpoint)))
+        return PullRequestClient(
+            self._build_client(endpoint="/".join(_endpoint)),
+            identity_client=self.identity_client(),
+        )
 
     def git_repository_client(self, project: str | None = None) -> GitRepositoryClient:
         """Return an HTTP client for interacting with a Git repository endpoint."""

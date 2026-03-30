@@ -14,6 +14,11 @@ from ez_ados.models import (
     GitRef,
     GitRefCollection,
     GitRepository,
+    Identity,
+    IdentityCollection,
+    IdentityRefCreate,
+    IdentityRefWithVote,
+    IdentityRefWithVoteCollection,
     Pipeline,
     PipelineCollection,
     PolicyConfiguration,
@@ -23,6 +28,7 @@ from ez_ados.models import (
     PullRequestThreadCollection,
     PullRequestThreadCommentCreate,
     PullRequestThreadCreate,
+    VoteEnum,
 )
 
 
@@ -229,3 +235,103 @@ def test_git_pull_request_thread_body():
 
     with pytest.raises(pydantic.ValidationError):
         PullRequestThreadCreate(comments=1)
+
+
+def test_vote_enum():
+    """Test VoteEnum validation from string and int."""
+    assert VoteEnum.validate("approved") == VoteEnum.approved
+    assert VoteEnum.validate(10) == VoteEnum.approved
+    assert VoteEnum.validate("noVote") == VoteEnum.noVote
+    assert VoteEnum.validate(0) == VoteEnum.noVote
+    assert VoteEnum.validate("rejected") == VoteEnum.rejected
+    assert VoteEnum.validate(-10) == VoteEnum.rejected
+
+    with pytest.raises(ValueError):
+        VoteEnum.validate("invalid")
+
+
+def test_identity_ref_with_vote():
+    """Test IdentityRefWithVote instantiation from API response."""
+    spec = {
+        "reviewerUrl": "https://dev.azure.com/fabrikam/_apis/git/repositories/3411ebc1/pullRequests/22/reviewers/d6245f20",
+        "vote": 0,
+        "id": "d6245f20-2af8-44f4-9451-8107cb2767db",
+        "displayName": "Normal Paulk",
+        "uniqueName": "fabrikamfiber16@hotmail.com",
+        "hasDeclined": False,
+        "isFlagged": False,
+        "isRequired": True,
+    }
+    resource = IdentityRefWithVote.model_validate(spec)
+    assert resource.id == "d6245f20-2af8-44f4-9451-8107cb2767db"
+    assert resource.display_name == "Normal Paulk"
+    assert resource.vote == VoteEnum.noVote
+    assert resource.is_required is True
+
+    resources = [
+        IdentityRefWithVote.model_validate(spec),
+        IdentityRefWithVote.model_validate(spec | {"id": "abc-123", "vote": 10}),
+    ]
+    collection = IdentityRefWithVoteCollection.model_validate({"count": len(resources), "value": resources})
+    assert collection.count == 2  # noqa: PLR2004
+    assert collection[1].vote == VoteEnum.approved
+
+
+def test_identity_ref_create():
+    """Test IdentityRefCreate serialization."""
+    reviewer = IdentityRefCreate(id="d6245f20-2af8-44f4-9451-8107cb2767db")
+    dumped = reviewer.model_dump(exclude_none=True)
+    assert dumped == {"id": "d6245f20-2af8-44f4-9451-8107cb2767db"}
+
+    reviewer_required = IdentityRefCreate(id="d6245f20", is_required=True)
+    dumped_required = reviewer_required.model_dump(exclude_none=True)
+    assert dumped_required == {"id": "d6245f20", "isRequired": True}
+
+    with pytest.raises(pydantic.ValidationError):
+        IdentityRefCreate(id=123)
+
+
+def test_identity():
+    """Test Identity instantiation from IMS API response."""
+    spec = {
+        "id": "81fa6389-0872-6fdd-a451-7ba7880f566a",
+        "descriptor": (
+            "Microsoft.IdentityModel.Claims.ClaimsIdentity;7a394543-62fd-4274-a7d2-8fac775942b6\\jtseng@vscsi.us"
+        ),
+        "subjectDescriptor": "aad.MDA0NzBlMzQtZGE2MS03YTY5LWJkOTYtNDg3YTg0OWVjNTU4",
+        "providerDisplayName": "Jia-hao Tseng",
+        "isActive": True,
+    }
+    resource = Identity.model_validate(spec)
+    assert resource.id == "81fa6389-0872-6fdd-a451-7ba7880f566a"
+    assert resource.provider_display_name == "Jia-hao Tseng"
+    assert resource.is_active is True
+    assert resource.subject_descriptor == "aad.MDA0NzBlMzQtZGE2MS03YTY5LWJkOTYtNDg3YTg0OWVjNTU4"
+
+    # Test serialization back to API format
+    dumped = resource.model_dump(exclude_none=True)
+    assert dumped["providerDisplayName"] == "Jia-hao Tseng"
+    assert dumped["isActive"] is True
+
+
+def test_identity_collection():
+    """Test IdentityCollection from IMS API response."""
+    spec = {
+        "count": 2,
+        "value": [
+            {
+                "id": "81fa6389-0872-6fdd-a451-7ba7880f566a",
+                "providerDisplayName": "Jia-hao Tseng",
+                "isActive": True,
+            },
+            {
+                "id": "7c86b535-818b-423f-b0fd-19a2e9f32710",
+                "providerDisplayName": "Project Collection Valid Users",
+                "isActive": True,
+            },
+        ],
+    }
+    collection = IdentityCollection.model_validate(spec)
+    assert collection.count == 2  # noqa: PLR2004
+    assert collection[0].id == "81fa6389-0872-6fdd-a451-7ba7880f566a"
+    assert collection[1].provider_display_name == "Project Collection Valid Users"

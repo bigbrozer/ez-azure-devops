@@ -22,3 +22,13 @@ class ThreadStatusEnum(StrIntEnum):
     closed = 4
     byDesign = 5
     pending = 6
+
+
+class VoteEnum(StrIntEnum):
+    """Enum for available pull request reviewer votes."""
+
+    rejected = -10
+    waitingForAuthor = -5
+    noVote = 0
+    approvedWithSuggestions = 5
+    approved = 10

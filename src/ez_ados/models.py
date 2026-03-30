@@ -18,14 +18,18 @@ from .git.models import (
     GitRefCollection,
     GitRepository,
 )
-from .git.pullrequests.enums import CommentTypeEnum, ThreadStatusEnum
+from .git.pullrequests.enums import CommentTypeEnum, ThreadStatusEnum, VoteEnum
 from .git.pullrequests.models import (
+    IdentityRefCreate,
+    IdentityRefWithVote,
+    IdentityRefWithVoteCollection,
     PullRequestThread,
     PullRequestThreadCollection,
     PullRequestThreadComment,
     PullRequestThreadCommentCreate,
     PullRequestThreadCreate,
 )
+from .identities.models import Identity, IdentityCollection
 from .pipelines.models import (
     Pipeline,
     PipelineCollection,
@@ -59,9 +63,14 @@ __all__ = [
     "GitRef",
     "GitRefCollection",
     "GitRepository",
+    "IdentityRefCreate",
+    "IdentityRefWithVote",
+    "IdentityRefWithVoteCollection",
     "HookSubscription",
     "HookSubscriptionCollection",
     "HookSubscriptionCreate",
+    "Identity",
+    "IdentityCollection",
     "Pipeline",
     "PipelineCollection",
     "PipelineConfiguration",
@@ -82,4 +91,5 @@ __all__ = [
     "PullRequestThreadCommentCreate",
     "PullRequestThreadCreate",
     "ThreadStatusEnum",
+    "VoteEnum",
 ]
