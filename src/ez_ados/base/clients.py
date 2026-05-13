@@ -2,7 +2,7 @@
 
 from typing import Any, TypeVar
 
-import httpx
+import niquests
 
 from pydantic import BaseModel
 
@@ -14,7 +14,7 @@ M = TypeVar("M", bound=BaseModel)
 class Client:
     """Base class for a client."""
 
-    def __init__(self, client: httpx.Client):
+    def __init__(self, client: niquests.Session):
         """Instantiate a new client."""
         self._client = client
         self.base_url = self._client.base_url
@@ -24,12 +24,12 @@ class Client:
         self._client.close()
 
     @staticmethod
-    def _raise_for_status(response: httpx.Response) -> httpx.Response:
-        """Raise a typed APIError instead of a raw httpx exception."""
+    def _raise_for_status(response: niquests.Response) -> niquests.Response:
+        """Raise a typed APIError instead of a raw niquests exception."""
         try:
             response.raise_for_status()
-        except httpx.HTTPStatusError as exc:
-            raise APIError.from_httpx(exc) from exc
+        except niquests.HTTPError as exc:
+            raise APIError.from_requests(exc) from exc
         return response
 
     def _get_resource(self, url: str, model: type[M], **params: Any) -> M:
@@ -50,4 +50,5 @@ class Client:
     def _delete_resource(self, url: str, **params: Any) -> int:
         """Perform a DELETE request and return the HTTP status code."""
         response = self._raise_for_status(self._client.delete(url, params=params or None))
+        assert response.status_code is not None  # noqa: S101
         return response.status_code

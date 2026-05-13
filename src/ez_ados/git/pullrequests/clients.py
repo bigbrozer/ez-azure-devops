@@ -2,7 +2,7 @@
 
 import logging
 
-import httpx
+import niquests
 
 from ...base.clients import Client
 from ...identities.clients import IdentityClient
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class PullRequestClient(Client):
     """Represent a client to Pull Request API in Azure DevOps."""
 
-    def __init__(self, client: httpx.Client, identity_client: IdentityClient | None = None):
+    def __init__(self, client: niquests.Session, identity_client: IdentityClient | None = None):
         """Instantiate a new Pull Request client."""
         super().__init__(client)
         self._identity_client = identity_client

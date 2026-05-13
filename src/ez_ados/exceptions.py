@@ -1,6 +1,6 @@
 """Custom exceptions for the ez_ados package."""
 
-import httpx
+import niquests
 
 HTTP_NOT_FOUND = 404
 
@@ -23,10 +23,13 @@ class APIError(AzureDevOpsError):
         self.url = url
 
     @classmethod
-    def from_httpx(cls, exc: httpx.HTTPStatusError) -> "APIError":
-        """Build the most specific subclass from an httpx HTTPStatusError."""
+    def from_requests(cls, exc: niquests.HTTPError) -> "APIError":
+        """Build the most specific subclass from a niquests HTTPError."""
+        assert exc.response is not None  # noqa: S101
+        assert exc.response.status_code is not None  # noqa: S101
+        assert exc.response.request is not None  # noqa: S101
         status_code = exc.response.status_code
-        url = str(exc.request.url)
+        url = str(exc.response.request.url)
         message = f"API error {status_code} for {url}: {exc.response.text}"
         if status_code == HTTP_NOT_FOUND:
             return NotFoundError(message, status_code=status_code, url=url)

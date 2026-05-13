@@ -27,7 +27,7 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     "azure-identity>=1.25.0,<2.0.0",
-    "httpx>=0.28.1",
+    "niquests>=3.18.8,<4.0.0",
     "pydantic>=2.11.10,<3.0.0",
 ]
 optional-dependencies = {}

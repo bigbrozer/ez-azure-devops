@@ -19,7 +19,7 @@ def test_basecollection_count():
     collection.append("test")
     assert collection.count == 1
     collection.append("second")
-    assert collection.count == 2
+    assert collection.count == 2  # noqa: PLR2004
 
 
 def test_basecollection_iteration():

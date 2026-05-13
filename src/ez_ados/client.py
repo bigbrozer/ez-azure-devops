@@ -3,7 +3,7 @@
 import atexit
 import logging
 
-import httpx
+import niquests
 
 from .builds.clients import BuildClient
 from .core.clients import ProjectClient
@@ -35,7 +35,7 @@ class AzureDevOps:
 
         self.org_url = org_url
         self._token: str | None = None
-        self._clients_cache: dict[int, httpx.Client] = {}
+        self._clients_cache: dict[int, niquests.Session] = {}
         self._timeout = timeout
 
     def authenticate(self, credentials: TokenCredential | None = None):
@@ -48,17 +48,15 @@ class AzureDevOps:
             credentials = AzureCredential()
         self._token = credentials.get_token()
 
-    def _build_client(self, endpoint: str, api_version: str | None = None) -> httpx.Client:
+    def _build_client(self, endpoint: str, api_version: str | None = None) -> niquests.Session:
         """Return an HTTP client for interacting with an Azure DevOps API endpoint."""
         default_params = {"api-version": api_version or AzureDevOps.API_VERSION}
-        client = httpx.Client(base_url=endpoint, timeout=self._timeout, params=default_params)
         if self._token:
-            client.headers.update({"Authorization": f"Bearer {self._token}"})
+            fingerprint = hash((endpoint, frozenset(default_params.items())))
         else:
             raise AuthenticationError(
                 "You are not connected to Azure DevOps ! Call authenticate() first to get a token."
             )
-        fingerprint = hash((client.base_url, client.params))
 
         # Get a client from global cache or store a new one
         if fingerprint in self._clients_cache:
@@ -66,16 +64,19 @@ class AzureDevOps:
             logger.debug("Found an existing client for %s (%d)", existing_client.base_url, fingerprint)
             return existing_client
         else:
-            logger.debug("Create a new client in cache %s (%d)", client.base_url, fingerprint)
-            self._clients_cache.update({fingerprint: client})
-            return client
+            session = niquests.Session(base_url=endpoint, timeout=self._timeout)
+            session.params.update(default_params)  # type: ignore[union-attr]
+            session.headers.update({"Authorization": f"Bearer {self._token}"})
+            logger.debug("Create a new client in cache %s (%d)", session.base_url, fingerprint)
+            self._clients_cache[fingerprint] = session
+            return session
 
     def _terminate(self):
         """Terminate all client connections at exit."""
         logger.debug("Closing all Azure DevOps API clients...")
-        for fingerprint, client in self._clients_cache.items():
-            logger.debug("Terminating client for %s (%d).", client.base_url, fingerprint)
-            client.close()
+        for fingerprint, session in self._clients_cache.items():
+            logger.debug("Terminating client for %s (%d).", session.base_url, fingerprint)
+            session.close()
 
     def projects_client(self) -> ProjectClient:
         """Return an HTTP client for interacting with Projects endpoint."""
