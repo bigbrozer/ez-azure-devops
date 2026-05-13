@@ -56,18 +56,8 @@ class PipelineCollection(BaseCollection[Pipeline]):
 
     def startswith(self, pattern: str) -> Self:
         """Filter pipelines that have a name starting with `pattern`."""
-
-        def _filter(p: Pipeline) -> bool:
-            return p.name.startswith(pattern)
-
-        filtered_results = list(filter(_filter, self))
-        return type(self)(count=len(filtered_results), value=filtered_results)
+        return self._filtered(lambda p: p.name.startswith(pattern))
 
     def from_folder(self, pattern: str) -> Self:
         """Filter pipelines that are contained in a folder."""
-
-        def _filter(p: Pipeline) -> bool:
-            return p.folder.match(pattern)
-
-        filtered_results = list(filter(_filter, self))
-        return type(self)(count=len(filtered_results), value=filtered_results)
+        return self._filtered(lambda p: p.folder.match(pattern))

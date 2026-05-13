@@ -20,22 +20,17 @@ class BuildClient(Client):
     def get_build_definition(self, id: str) -> BuildDefinition:
         """Get a build definition by ID."""
         logger.debug("Getting build definition id=%d", id)
-        response = BuildDefinition.model_validate(self._client.get(f"/definitions/{id}").raise_for_status().json())
+        response = self._get_resource(f"/definitions/{id}", BuildDefinition)
         logger.debug("Build definition id=%s specs: %s", id, response)
         return response
 
     def list_build_definitions(self, repository: GitRepository | None = None) -> BuildDefinitionCollection:
         """List all build definitions available in a project."""
         _query_params: dict[str, str] = {}
-
-        # Build query params
         if isinstance(repository, GitRepository):
             _query_params["repositoryId"] = repository.id
             _query_params["repositoryType"] = "TfsGit"
-
-        return BuildDefinitionCollection.model_validate(
-            self._client.get("/definitions", params=_query_params).raise_for_status().json()
-        )
+        return self._get_resource("/definitions", BuildDefinitionCollection, **_query_params)
 
     def create_build_definition(self, definition: BuildDefinitionCreate) -> BuildDefinition:
         """Create a new build definition in a project."""
@@ -46,15 +41,10 @@ class BuildClient(Client):
             definition.process.yaml_filename,
             definition.repository.id,
         )
-
-        logger.debug("Post request body: %s", definition.model_dump(mode="json"))
-        response = self._client.post("/definitions", json=definition.model_dump(mode="json")).raise_for_status()
-        serialized_response = BuildDefinition.model_validate(response.json())
-
-        logger.debug("Build definition resource created: %s", serialized_response)
-        return serialized_response
+        response = self._post_resource("/definitions", BuildDefinition, definition.model_dump(mode="json"))
+        logger.debug("Build definition resource created: %s", response)
+        return response
 
     def delete_build_definition(self, id: int) -> int:
         """Delete a build definition resource."""
-        response = self._client.delete(f"/definitions/{id}").raise_for_status()
-        return response.status_code
+        return self._delete_resource(f"/definitions/{id}")

@@ -1,8 +1,9 @@
 """Module for base class models."""
 
+from collections.abc import Callable
 from typing import Annotated, Self
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 
 class JSONModel(BaseModel):
@@ -25,6 +26,10 @@ class BaseCollection[T](JSONModel):
     def count(self) -> int:
         """Return the number of items in this collection."""
         return len(self.value)
+
+    def _filtered(self, predicate: Callable[[T], bool]) -> Self:
+        """Return a new collection containing only items that match `predicate`."""
+        return type(self)(value=list(filter(predicate, self)))
 
     def append(self, element: T):
         """Append an element to the collection."""

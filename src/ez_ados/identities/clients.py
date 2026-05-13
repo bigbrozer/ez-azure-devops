@@ -15,11 +15,13 @@ class IdentityClient(Client):
     def search_by_email(self, email: str) -> IdentityCollection:
         """Search for identities by email address."""
         logger.info("Searching for identity by email '%s'", email)
-        response = self._client.get(
+        return self._get_resource(
             "/",
-            params={"searchFilter": "General", "filterValue": email, "queryMembership": "None"},
-        ).raise_for_status()
-        return IdentityCollection.model_validate(response.json())
+            IdentityCollection,
+            searchFilter="General",
+            filterValue=email,
+            queryMembership="None",
+        )
 
     def resolve_identities_by_email(self, emails: list[str]) -> list[Identity]:
         """Resolve multiple email addresses to identities."""

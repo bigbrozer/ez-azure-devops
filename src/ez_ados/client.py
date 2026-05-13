@@ -8,11 +8,12 @@ import httpx
 from .builds.clients import BuildClient
 from .core.clients import ProjectClient
 from .credentials import AzureCredential, TokenCredential
-from .git.clients import GitPolicyConfigurationClient, GitRepositoryClient
+from .exceptions import AuthenticationError
+from .git.clients import GitRepositoryClient
 from .git.pullrequests.clients import PullRequestClient
 from .identities.clients import IdentityClient
 from .pipelines.clients import PipelineClient
-from .policy.configurations.clients import PolicyConfigurationClient
+from .policy.configurations.clients import GitPolicyConfigurationClient, PolicyConfigurationClient
 from .policy.types.clients import PolicyTypeClient
 from .servicehooks.subscriptions.clients import HookSubscriptionClient
 
@@ -54,8 +55,8 @@ class AzureDevOps:
         if self._token:
             client.headers.update({"Authorization": f"Bearer {self._token}"})
         else:
-            raise ValueError(
-                "You are not connected to Azure DevOps ! Call one of *_authenticate() methods first to get a token."
+            raise AuthenticationError(
+                "You are not connected to Azure DevOps ! Call authenticate() first to get a token."
             )
         fingerprint = hash((client.base_url, client.params))
 

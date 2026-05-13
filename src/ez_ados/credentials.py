@@ -4,11 +4,10 @@ import logging
 
 from azure.identity import ClientSecretCredential, DefaultAzureCredential
 
+from .constants import AZURE_DEVOPS_SCOPE
+
 # Get a logger for this module
 logger = logging.getLogger(__name__)
-
-# Scope for Azure DevOps
-SCOPE = "499b84ac-1321-427f-aa17-267ca6975798"
 
 
 class TokenCredential:
@@ -41,7 +40,7 @@ class AzureCredential(TokenCredential):
 
     def get_token(self):
         """Return a token."""
-        return self.credentials.get_token(SCOPE).token
+        return self.credentials.get_token(AZURE_DEVOPS_SCOPE).token
 
 
 class ServicePrincipalCredential(TokenCredential):
@@ -53,7 +52,7 @@ class ServicePrincipalCredential(TokenCredential):
 
     def get_token(self):
         """Return a token."""
-        return self.credentials.get_token(SCOPE).token
+        return self.credentials.get_token(AZURE_DEVOPS_SCOPE).token
 
 
 __all__ = [

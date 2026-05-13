@@ -5,6 +5,7 @@ from typing import Annotated, Self
 from pydantic import Field
 
 from ...base.models import BaseCollection, JSONModel
+from ...constants import BUILD_POLICY_TYPE_ID
 from ..types.models import PolicyType
 
 
@@ -27,8 +28,8 @@ class PolicySettings(JSONModel):
     scope: list[PolicyScope]
 
 
-class PolicyConfigurationBase(JSONModel):
-    """Represent a request to create a policy configuration."""
+class PolicyConfigurationPayload(JSONModel):
+    """Fields shared by create and update requests for a policy configuration."""
 
     enabled: Annotated[bool, Field(alias="isEnabled")]
     required: Annotated[bool, Field(alias="isBlocking")]
@@ -37,16 +38,8 @@ class PolicyConfigurationBase(JSONModel):
     type: PolicyType
 
 
-class PolicyConfigurationCreate(PolicyConfigurationBase):
-    """Represent a request to create a policy configuration."""
-
-
-class PolicyConfigurationUpdate(PolicyConfigurationBase):
-    """Represent a request to update a policy configuration."""
-
-
-class PolicyConfiguration(PolicyConfigurationBase):
-    """Represent a policy configuration."""
+class PolicyConfiguration(PolicyConfigurationPayload):
+    """Represent a policy configuration returned by the API."""
 
     id: int
     deleted: Annotated[bool, Field(alias="isDeleted")]
@@ -56,25 +49,12 @@ class PolicyConfigurationCollection(BaseCollection[PolicyConfiguration]):
     """Represent a collection of policy configuration."""
 
     def _is_build_type(self, policy: PolicyConfiguration) -> bool:
-        return not policy.deleted and policy.type.id == "0609b952-1397-4640-95ec-e00a01b2c241"
+        return not policy.deleted and policy.type.id == BUILD_POLICY_TYPE_ID
 
     def get_build_policies(self) -> Self:
         """Return list of build policies from a collection of policy configuration."""
-
-        def _filter(policy: PolicyConfiguration) -> bool:
-            return self._is_build_type(policy)
-
-        filtered_results = list(filter(_filter, self))
-        return type(self)(count=len(filtered_results), value=filtered_results)
+        return self._filtered(self._is_build_type)
 
     def match_build_definition(self, id: int) -> Self:
         """Return list of build policies that match build definition by ID."""
-
-        def _filter(policy: PolicyConfiguration) -> bool:
-            if self._is_build_type(policy):
-                return policy.settings.build_definition_id == id
-            else:
-                return False
-
-        filtered_results = list(filter(_filter, self))
-        return type(self)(count=len(filtered_results), value=filtered_results)
+        return self._filtered(lambda p: self._is_build_type(p) and p.settings.build_definition_id == id)

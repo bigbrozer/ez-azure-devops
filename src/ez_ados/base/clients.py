@@ -1,6 +1,14 @@
 """Base classes for instantiating clients."""
 
+from typing import Any, TypeVar
+
 import httpx
+
+from pydantic import BaseModel
+
+from ..exceptions import APIError  # noqa: TCH001
+
+M = TypeVar("M", bound=BaseModel)
 
 
 class Client:
@@ -14,3 +22,32 @@ class Client:
     def close(self) -> None:
         """Close client connection."""
         self._client.close()
+
+    @staticmethod
+    def _raise_for_status(response: httpx.Response) -> httpx.Response:
+        """Raise a typed APIError instead of a raw httpx exception."""
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            raise APIError.from_httpx(exc) from exc
+        return response
+
+    def _get_resource(self, url: str, model: type[M], **params: Any) -> M:
+        """Perform a GET request and return a validated model instance."""
+        response = self._raise_for_status(self._client.get(url, params=params or None))
+        return model.model_validate(response.json())
+
+    def _post_resource(self, url: str, model: type[M], body: dict[str, Any], **params: Any) -> M:
+        """Perform a POST request and return a validated model instance."""
+        response = self._raise_for_status(self._client.post(url, json=body, params=params or None))
+        return model.model_validate(response.json())
+
+    def _put_resource(self, url: str, model: type[M], body: dict[str, Any], **params: Any) -> M:
+        """Perform a PUT request and return a validated model instance."""
+        response = self._raise_for_status(self._client.put(url, json=body, params=params or None))
+        return model.model_validate(response.json())
+
+    def _delete_resource(self, url: str, **params: Any) -> int:
+        """Perform a DELETE request and return the HTTP status code."""
+        response = self._raise_for_status(self._client.delete(url, params=params or None))
+        return response.status_code

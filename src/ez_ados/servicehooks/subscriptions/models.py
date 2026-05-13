@@ -41,30 +41,22 @@ class HookSubscriptionCollection(BaseCollection[HookSubscription]):
 
     def for_event(self, event_type: str) -> Self:
         """Filter hook subscription for a type of event."""
-
-        def _filter(p: HookSubscription) -> bool:
-            return p.event_type == event_type
-
-        filtered_results = list(filter(_filter, self))
-        return type(self)(count=len(filtered_results), value=filtered_results)
+        return self._filtered(lambda p: p.event_type == event_type)
 
     def for_git_push_event(
         self, branch_name: str | None = None, project_id: str | None = None, repository_id: str | None = None
     ) -> Self:
         """Filter hook subscription for a git.push event."""
-        _filtered_events = self.for_event("git.push")
 
-        def _filter(p: HookSubscription) -> bool:
-            if p.event_type == "git.push":
-                if branch_name is not None and p.publisher_inputs["branch"] != branch_name:
-                    return False
-                if project_id is not None and p.publisher_inputs["projectId"] != project_id:
-                    return False
-                if repository_id is not None and p.publisher_inputs["repository"] != repository_id:
-                    return False
-                return True
-            else:
+        def _match(p: HookSubscription) -> bool:
+            if p.event_type != "git.push":
                 return False
+            if branch_name is not None and p.publisher_inputs["branch"] != branch_name:
+                return False
+            if project_id is not None and p.publisher_inputs["projectId"] != project_id:
+                return False
+            if repository_id is not None and p.publisher_inputs["repository"] != repository_id:
+                return False
+            return True
 
-        filtered_results = list(filter(_filter, _filtered_events))
-        return type(self)(count=len(filtered_results), value=filtered_results)
+        return self._filtered(_match)

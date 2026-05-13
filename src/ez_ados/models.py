@@ -2,9 +2,9 @@
 
 from .builds.models import (
     BuildDefinition,
-    BuildDefinitionBase,
     BuildDefinitionCollection,
     BuildDefinitionCreate,
+    BuildDefinitionSummary,
     BuildProcess,
     BuildRepository,
 )
@@ -40,19 +40,18 @@ from .pipelines.models import (
 from .policy.configurations.models import (
     PolicyConfiguration,
     PolicyConfigurationCollection,
-    PolicyConfigurationCreate,
-    PolicyConfigurationUpdate,
+    PolicyConfigurationPayload,
     PolicyScope,
     PolicySettings,
-    PolicyType,
 )
+from .policy.types.models import PolicyType
 from .servicehooks.subscriptions.models import HookSubscription, HookSubscriptionCollection, HookSubscriptionCreate
 
 __all__ = [
     "BuildDefinition",
-    "BuildDefinitionBase",
     "BuildDefinitionCollection",
     "BuildDefinitionCreate",
+    "BuildDefinitionSummary",
     "BuildProcess",
     "BuildRepository",
     "CommentTypeEnum",
@@ -78,8 +77,7 @@ __all__ = [
     "PipelineCreate",
     "PolicyConfiguration",
     "PolicyConfigurationCollection",
-    "PolicyConfigurationCreate",
-    "PolicyConfigurationUpdate",
+    "PolicyConfigurationPayload",
     "PolicyScope",
     "PolicySettings",
     "PolicyType",
