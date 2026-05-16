@@ -6,7 +6,6 @@ from pathlib import PurePosixPath
 from typing import Any
 
 from ..base.clients import Client
-from ..policy.configurations.models import PolicyConfigurationCollection
 from .models import GitItem, GitItemCollection, GitItemDescriptor, GitItemsBatch, GitRefCollection, GitRepository
 
 # Get a logger for this module
@@ -19,25 +18,23 @@ class GitRepositoryClient(Client):
     def get(self, repository: str) -> GitRepository:
         """Fetch a single Git repository."""
         logger.info("Fetching details for repository '%s'...", repository)
-        return GitRepository.model_validate(self._client.get(repository).raise_for_status().json())
+        return self._get_resource(repository, GitRepository)
 
     def get_refs(self, repository: str, branch_startswith: str | None = None) -> GitRefCollection:
         """Fetch all refs for a single Git repository."""
         req_params = {}
         if branch_startswith:
-            req_params.update({"filter": branch_startswith.replace("refs/", "")})
-        return GitRefCollection.model_validate(
-            self._client.get(f"/{repository}/refs", params=req_params).raise_for_status().json()
-        )
+            req_params["filter"] = branch_startswith.replace("refs/", "")
+        return self._get_resource(f"/{repository}/refs", GitRefCollection, **req_params)
 
     def get_items_batch(self, repository: str, item_descriptors: GitItemsBatch) -> GitItemCollection:
         """Git a batch of items (files and folders) from a repository."""
         request_body = item_descriptors.model_dump(mode="json")
         logger.debug("Items batch Body: %s", request_body)
-        response = self._client.post(f"/{repository}/itemsbatch", json=request_body).raise_for_status()
+        response = self._raise_for_status(self._client.post(f"/{repository}/itemsbatch", json=request_body))
         logger.debug("Items batch POST: %s", response.url)
         response_dict = response.json()
-        _response = {"count": len(response_dict["value"][0]), "value": response_dict["value"][0]}
+        _response = {"value": response_dict["value"][0]}
         serialized_response = GitItemCollection.model_validate(_response)
         logger.debug("Items batch response: %s", serialized_response)
         return serialized_response
@@ -61,7 +58,7 @@ class GitRepositoryClient(Client):
         if branch:
             req_params["versionDescriptor.version"] = branch
 
-        response = self._client.get(f"/{repository}/items", params=req_params).raise_for_status()
+        response = self._raise_for_status(self._client.get(f"/{repository}/items", params=req_params))
         logger.debug("get_item: %s\nResponse: %s", response.url, response.json())
         return GitItem.model_validate(response.json())
 
@@ -90,30 +87,7 @@ class GitRepositoryClient(Client):
         if branch:
             req_params.update({"filter": branch.replace("refs/", "")})
         logger.info("Branch '%s' for '%s' repository is now %s.", branch, repository, branch_status)
-        response = self._client.patch(
-            f"/{repository}/refs", json={"isLocked": locked}, params=req_params
-        ).raise_for_status()
-        return response.json()
-
-
-class GitPolicyConfigurationClient(Client):
-    """Represent a client to Git Repository Policy Configuration API in Azure DevOps."""
-
-    def get_policies_for_ref(
-        self, repository_id: str, ref_name: str, policy_type: str
-    ) -> PolicyConfigurationCollection:
-        """Get all policies for a branch of a repository."""
-        response = self._client.get(
-            "", params={"repositoryId": repository_id, "refName": ref_name, "policyType": policy_type}
-        ).raise_for_status()
-        logger.debug("Request URL: %s\nResponse: %s", response.url, response.content)
-        return PolicyConfigurationCollection.model_validate(response.json())
-
-    def get_build_policies_for_ref(self, repository_id: str, ref_name: str) -> PolicyConfigurationCollection:
-        """Get all build policies for a branch of a repository."""
-        policies = self.get_policies_for_ref(
-            repository_id=repository_id,
-            ref_name=ref_name,
-            policy_type="0609b952-1397-4640-95ec-e00a01b2c241",
+        response = self._raise_for_status(
+            self._client.patch(f"/{repository}/refs", json={"isLocked": locked}, params=req_params)
         )
-        return policies
+        return response.json()

@@ -78,9 +78,4 @@ class GitItemCollection(BaseCollection[GitItem]):
 
     def match(self, pattern: str) -> Self:
         """Return a list of items which match a given pattern."""
-
-        def _filter(i: GitItem) -> bool:
-            return i.path.match(pattern)
-
-        filtered_results = list(filter(_filter, self))
-        return type(self)(count=len(filtered_results), value=filtered_results)
+        return self._filtered(lambda i: i.path.match(pattern))

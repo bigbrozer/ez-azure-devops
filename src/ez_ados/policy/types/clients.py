@@ -14,8 +14,8 @@ class PolicyTypeClient(Client):
 
     def list(self) -> PolicyTypeCollection:
         """List all policy types available in a project."""
-        return PolicyTypeCollection.model_validate(self._client.get("").raise_for_status().json())
+        return self._get_resource("", PolicyTypeCollection)
 
     def get(self, id: str) -> PolicyType:
-        """Get a policy type by ID.."""
-        return PolicyType.model_validate(self._client.get(id).raise_for_status().json())
+        """Get a policy type by ID."""
+        return self._get_resource(id, PolicyType)

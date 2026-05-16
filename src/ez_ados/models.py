@@ -2,9 +2,9 @@
 
 from .builds.models import (
     BuildDefinition,
-    BuildDefinitionBase,
     BuildDefinitionCollection,
     BuildDefinitionCreate,
+    BuildDefinitionSummary,
     BuildProcess,
     BuildRepository,
 )
@@ -18,14 +18,18 @@ from .git.models import (
     GitRefCollection,
     GitRepository,
 )
-from .git.pullrequests.enums import CommentTypeEnum, ThreadStatusEnum
+from .git.pullrequests.enums import CommentTypeEnum, ThreadStatusEnum, VoteEnum
 from .git.pullrequests.models import (
+    IdentityRefCreate,
+    IdentityRefWithVote,
+    IdentityRefWithVoteCollection,
     PullRequestThread,
     PullRequestThreadCollection,
     PullRequestThreadComment,
     PullRequestThreadCommentCreate,
     PullRequestThreadCreate,
 )
+from .identities.models import Identity, IdentityCollection
 from .pipelines.models import (
     Pipeline,
     PipelineCollection,
@@ -36,19 +40,18 @@ from .pipelines.models import (
 from .policy.configurations.models import (
     PolicyConfiguration,
     PolicyConfigurationCollection,
-    PolicyConfigurationCreate,
-    PolicyConfigurationUpdate,
+    PolicyConfigurationPayload,
     PolicyScope,
     PolicySettings,
-    PolicyType,
 )
+from .policy.types.models import PolicyType
 from .servicehooks.subscriptions.models import HookSubscription, HookSubscriptionCollection, HookSubscriptionCreate
 
 __all__ = [
     "BuildDefinition",
-    "BuildDefinitionBase",
     "BuildDefinitionCollection",
     "BuildDefinitionCreate",
+    "BuildDefinitionSummary",
     "BuildProcess",
     "BuildRepository",
     "CommentTypeEnum",
@@ -59,9 +62,14 @@ __all__ = [
     "GitRef",
     "GitRefCollection",
     "GitRepository",
+    "IdentityRefCreate",
+    "IdentityRefWithVote",
+    "IdentityRefWithVoteCollection",
     "HookSubscription",
     "HookSubscriptionCollection",
     "HookSubscriptionCreate",
+    "Identity",
+    "IdentityCollection",
     "Pipeline",
     "PipelineCollection",
     "PipelineConfiguration",
@@ -69,8 +77,7 @@ __all__ = [
     "PipelineCreate",
     "PolicyConfiguration",
     "PolicyConfigurationCollection",
-    "PolicyConfigurationCreate",
-    "PolicyConfigurationUpdate",
+    "PolicyConfigurationPayload",
     "PolicyScope",
     "PolicySettings",
     "PolicyType",
@@ -82,4 +89,5 @@ __all__ = [
     "PullRequestThreadCommentCreate",
     "PullRequestThreadCreate",
     "ThreadStatusEnum",
+    "VoteEnum",
 ]

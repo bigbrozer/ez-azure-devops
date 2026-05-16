@@ -34,8 +34,8 @@ class BuildRepository(JSONModel):
             return None
 
 
-class BuildDefinitionBase(JSONModel):
-    """The base class of a build definition."""
+class BuildDefinitionSummary(JSONModel):
+    """Summary of a build definition as returned by list endpoints."""
 
     id: int
     revision: int
@@ -56,7 +56,7 @@ class BuildDefinitionCreate(JSONModel):
     properties: dict[str, Properties] | None = None
 
 
-class BuildDefinition(BuildDefinitionBase):
+class BuildDefinition(BuildDefinitionSummary):
     """Represents a build definition resource."""
 
     process: BuildProcess
@@ -69,28 +69,18 @@ class BuildDefinition(BuildDefinitionBase):
         return PurePosixPath(self.path.joinpath(self.name))
 
 
-class BuildDefinitionCollection(BaseCollection[BuildDefinitionBase]):
+class BuildDefinitionCollection(BaseCollection[BuildDefinitionSummary]):
     """Represents a collection of build definition resources."""
 
     def startswith(self, pattern: str) -> Self:
         """Filter build definitions that have a name starting with `pattern`."""
-
-        def _filter(p: BuildDefinitionBase) -> bool:
-            return p.name.startswith(pattern)
-
-        filtered_results = list(filter(_filter, self))
-        return type(self)(count=len(filtered_results), value=filtered_results)
+        return self._filtered(lambda p: p.name.startswith(pattern))
 
     def from_folder(self, pattern: str) -> Self:
         """Filter build definitions that are contained in a folder."""
+        return self._filtered(lambda p: p.path.match(pattern))
 
-        def _filter(p: BuildDefinitionBase) -> bool:
-            return p.path.match(pattern)
-
-        filtered_results = list(filter(_filter, self))
-        return type(self)(count=len(filtered_results), value=filtered_results)
-
-    def get(self, name: str) -> BuildDefinitionBase | None:
+    def get(self, name: str) -> BuildDefinitionSummary | None:
         """Get a build definition by `name` or None if not found."""
         for item in self:
             if item.name == name:

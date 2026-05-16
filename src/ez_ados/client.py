@@ -3,15 +3,17 @@
 import atexit
 import logging
 
-import httpx
+import niquests
 
 from .builds.clients import BuildClient
 from .core.clients import ProjectClient
 from .credentials import AzureCredential, TokenCredential
-from .git.clients import GitPolicyConfigurationClient, GitRepositoryClient
+from .exceptions import AuthenticationError
+from .git.clients import GitRepositoryClient
 from .git.pullrequests.clients import PullRequestClient
+from .identities.clients import IdentityClient
 from .pipelines.clients import PipelineClient
-from .policy.configurations.clients import PolicyConfigurationClient
+from .policy.configurations.clients import GitPolicyConfigurationClient, PolicyConfigurationClient
 from .policy.types.clients import PolicyTypeClient
 from .servicehooks.subscriptions.clients import HookSubscriptionClient
 
@@ -33,7 +35,7 @@ class AzureDevOps:
 
         self.org_url = org_url
         self._token: str | None = None
-        self._clients_cache: dict[int, httpx.Client] = {}
+        self._clients_cache: dict[int, niquests.Session] = {}
         self._timeout = timeout
 
     def authenticate(self, credentials: TokenCredential | None = None):
@@ -46,17 +48,15 @@ class AzureDevOps:
             credentials = AzureCredential()
         self._token = credentials.get_token()
 
-    def _build_client(self, endpoint: str) -> httpx.Client:
+    def _build_client(self, endpoint: str, api_version: str | None = None) -> niquests.Session:
         """Return an HTTP client for interacting with an Azure DevOps API endpoint."""
-        default_params = {"api-version": AzureDevOps.API_VERSION}
-        client = httpx.Client(base_url=endpoint, timeout=self._timeout, params=default_params)
+        default_params = {"api-version": api_version or AzureDevOps.API_VERSION}
         if self._token:
-            client.headers.update({"Authorization": f"Bearer {self._token}"})
+            fingerprint = hash((endpoint, frozenset(default_params.items())))
         else:
-            raise ValueError(
-                "You are not connected to Azure DevOps ! Call one of *_authenticate() methods first to get a token."
+            raise AuthenticationError(
+                "You are not connected to Azure DevOps ! Call authenticate() first to get a token."
             )
-        fingerprint = hash((client.base_url, client.params))
 
         # Get a client from global cache or store a new one
         if fingerprint in self._clients_cache:
@@ -64,26 +64,38 @@ class AzureDevOps:
             logger.debug("Found an existing client for %s (%d)", existing_client.base_url, fingerprint)
             return existing_client
         else:
-            logger.debug("Create a new client in cache %s (%d)", client.base_url, fingerprint)
-            self._clients_cache.update({fingerprint: client})
-            return client
+            session = niquests.Session(base_url=endpoint, timeout=self._timeout)
+            session.params.update(default_params)  # type: ignore[union-attr]
+            session.headers.update({"Authorization": f"Bearer {self._token}"})
+            logger.debug("Create a new client in cache %s (%d)", session.base_url, fingerprint)
+            self._clients_cache[fingerprint] = session
+            return session
 
     def _terminate(self):
         """Terminate all client connections at exit."""
         logger.debug("Closing all Azure DevOps API clients...")
-        for fingerprint, client in self._clients_cache.items():
-            logger.debug("Terminating client for %s (%d).", client.base_url, fingerprint)
-            client.close()
+        for fingerprint, session in self._clients_cache.items():
+            logger.debug("Terminating client for %s (%d).", session.base_url, fingerprint)
+            session.close()
 
     def projects_client(self) -> ProjectClient:
         """Return an HTTP client for interacting with Projects endpoint."""
         _endpoint = [self.org_url, "_apis", "projects"]
         return ProjectClient(self._build_client(endpoint="/".join(_endpoint)))
 
+    def identity_client(self) -> IdentityClient:
+        """Return an HTTP client for interacting with the IMS Identities endpoint."""
+        vssps_url = self.org_url.replace("https://dev.azure.com/", "https://vssps.dev.azure.com/")
+        _endpoint = [vssps_url, "_apis", "identities"]
+        return IdentityClient(self._build_client(endpoint="/".join(_endpoint), api_version="7.2-preview.1"))
+
     def pull_request_client(self, project: str, repository: str) -> PullRequestClient:
         """Return an HTTP client for interacting with Pull Request endpoint."""
         _endpoint = [self.org_url, project, "_apis", "git", "repositories", repository, "pullrequests"]
-        return PullRequestClient(self._build_client(endpoint="/".join(_endpoint)))
+        return PullRequestClient(
+            self._build_client(endpoint="/".join(_endpoint)),
+            identity_client=self.identity_client(),
+        )
 
     def git_repository_client(self, project: str | None = None) -> GitRepositoryClient:
         """Return an HTTP client for interacting with a Git repository endpoint."""

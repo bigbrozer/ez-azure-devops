@@ -9,4 +9,4 @@ class ProjectClient(Client):
 
     def get(self, name: str) -> Project:
         """Get a single project resource."""
-        return Project.model_validate(self._client.get(name).raise_for_status().json())
+        return self._get_resource(name, Project)
